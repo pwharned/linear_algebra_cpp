@@ -1,4 +1,5 @@
 #include <Rcpp.h>
+#include <matrix.h>
 using namespace Rcpp;
 
 // This is a simple example of exporting a C++ function to R. You can
@@ -12,30 +13,17 @@ using namespace Rcpp;
 //
 
 // [[Rcpp::export]]
-std::vector<int> FibCpp0(int n)
+int mCreateTest()
 {
-  // Error checking
-  if(n <= 0)
-  {
-    throw std::range_error("n must be a positive integer");
-  }
+  matrix<int> mymatrix = matrix<int>();
+  std::cout << "The number of elements in mymatrix is " << mymatrix.m_nElements << std::endl;
+
+  matrix<int> mymatrix2 = matrix<int>(1000,1000);
+  std::cout << "The number of elements in mymatrix2 is " << mymatrix2.m_nElements << std::endl;
+  delete &mymatrix2.m_elements;
+  delete &mymatrix2;
   
-  // Allocate memory
-  std::vector<int> out(n);
-  out[0]=1;
-  
-  // Compute additional terms
-  if(n > 0)
-  {
-    out[1]=1;
-    int i;
-    for(i=2; i<n; i++)
-    {
-      out[i] = out[i-1] + out[i-2];
-    }
-  }
-  
-  return out;
+  return 0;
 }
 
 
@@ -45,7 +33,7 @@ std::vector<int> FibCpp0(int n)
 //
 
 /*** R
-tail(FibCpp0(30))
+tail(mCreateTest())
 
 */
 

@@ -21,6 +21,17 @@ This is an ongoing learning experience and any helpful feedback is more than wel
 
 Much of the code and content here is taken or adapted from the Youtube channel 'Quantative Bytes's video series 'Linear Algebra in C++' or the 'C++ Primer' by Lippman, Lajoie and Moo (LLM) which I have adapted to my own use case. I also use the book 'Mathematics for Machine Learning' by Deisenroth, Faisal and Ong (DFO) and Sheldon Axler's 'Linear Algebra Done Right'. (SA) I will try to provide explicit references using the shorthand I described above where applicable.
 
+## Testing and Running Code
+
+I am using Rstudio as my IDE for the following reasons.
+
+1.  I don't want to pay for an IDE
+2.  I don't like VSCode or any of the other free IDES (CodeBlocks etc.)
+3.  I already have several IDES installed on my computer for other languages and hate bloat
+4.  Rstudio is a great all around IDE and includes support for easily running C/C++ programs - plus I am familiar with it from using R.
+
+Running C++ code in Rstudio is very easy. You create a new C++ file from a template, and it will add some elements to it to allow you to simple source the file as if it were a .R file. Then just source the file and it will compile and run the functions for you. Boom.
+
 # Matrices
 
 "A matrix is an m\*n-tuple of elements which is ordered according to a rectangular schema consisting of m rows and n columns" (Deisenroth, Faisal and Ong)
@@ -33,7 +44,6 @@ Unlike languages like Java or Python C++ defines classes as `templates` in separ
 
 If your familiar with basic C/C++ concepts you know that external dependencies to a program are defined in header files that end with `.h`. We then include those dependencies in our own programs by adding `#include <dependency>` to the top of any program that needs it. (I'm using the term library as it will be familiar to those coming from the JVM or Python).
 
-
     #include <iostream>
 
     int main() {
@@ -45,4 +55,162 @@ If your familiar with basic C/C++ concepts you know that external dependencies t
       return 0;
     }
 
-So we need to write a
+So, in order to create a class for our matrix we need a header file with a class template. Lets create a basic header file and then a program that uses it just to get our heads around the concept. This example is adapted from LLM page 77.
+
+    #ifndef MATRIX_H
+    #define MATRIX_H
+
+    template <class T>
+    class matrix
+    {
+    public:
+      matrix();
+    };
+
+
+    #endif
+
+Okay a lot more going on here than I thought. First lets talk about the header directives. If you look in LLM page 77 they discuss <strong>header guards</strong>. The idea is that when we have a header file, we may define some classes or methods that have dependencies on other header files, and so we have to `#include` those in our own header files. However this can lead to recursive imports since other header files may also `#include` those same dependencies. You may have run into this problem in python imports. In order to avoid this, we use the header guards `#ifndef <>; #define;…#endif;` - our code goes where the ellipses are.
+
+### Interlude: Classes versus Templates
+
+C++ has classes and templates; Scala just has classes which can be type parameterizable - C++(?) and Scala are both strongly typed in that the types have to be known at compile time - one of the issues that comes up is say we want to define a class that takes an input variable to its constructor of a certain type, but we dont want to define separate classes for each type we want to support ( in our case a matrix of integers and a matrix of longs).
+
+In Scala we would do something like this.\
+
+    class Matrix[A];
+
+The C++ equivalent is a `template`
+
+    template <class T>
+    class matrix
+    {
+    public:
+      matrix();
+      int nRows;
+      int nCols;
+      int nElements;
+      T *elements;
+    };
+
+Notice that we have a single method that hasn't yet been implemented - the class constructor. In C++ we implement these separately.
+
+    template <class T>
+    matrix<T>::matrix()
+    {
+      nRows = 1;
+      nCols = 1;
+      nElements = 1;
+      elements = new T[nElements];
+      elements[0] = 0.0;
+    }
+
+We can test that we have done everything correctly with the following test program
+
+    #include <Rcpp.h>
+    #include <matrix.h>
+    using namespace Rcpp;
+
+    int mCreateTest()
+    {
+      matrix<int> mymatrix = matrix<int>();
+      std::cout << "The number of elements in mymatrix is " << mymatrix.nElements << std::endl;
+      
+      return 0;
+    }
+
+Couple of things to note.
+
+1.  Once we `include` the matrix .h header file, we can define the matrix by specifying the type we want in the constructor. Much easier than I expected.
+2.  We can access public class members with the `.` notation. very easy.
+3.  We can deallocate the memory allocated to the matrix using the &notation, which returns a reference? to the object ( still not clear on this)
+
+Our matrix still doesn't really have any data because we only defined a constructor that returns a 1 dimensional matrix with a single float in it. Lets define a constructor for our matrix that returns a matrix of a given size with all the elements set to zero.
+
+### Naming conventions
+
+I realized at this point that I need to adjust my naming conventions for variables and parameters. I wanted to keep things simple but If I define a constructor that takes an `int` and then sets a class member to that input parameter, the name of the class member must be different than the input parameter. So i am going to append an `m_` to all class members to indicate these are members of the class matrix. I don't know if this is standard convention, its what I saw in Quantitative Bytes, but its a good lesson that you should set for yourself consistent naming conventions that you follow ( I don't go in for style guides and standards as this just adds to the every growing pile of things you need to learn) - as long as the convention makes sense and you follow it, its probably good enough.
+
+Heres the new template for our new constructor.
+
+    template <class T>
+    matrix<T>::matrix(int nRows, int nCols)
+    {
+      m_nRows = nRows;
+      m_nCols = nCols;
+      m_nElements = nRows*nCols;
+      m_elements = new T[m_nElements];
+      for(int i = 0; i<m_nElements; i++){
+        m_elements[i]=0.0;
+      }
+    }
+
+We also have to update the class template with a reference to our new method before implementing it.
+
+    template <class T>
+    class matrix
+    {
+    public:
+      matrix();
+      matrix(int nRows, int nCols);
+      int m_nRows;
+      int m_nCols;
+      int m_nElements;
+      T *m_elements;
+    };
+
+We can then update our test code.
+
+    int mCreateTest()
+    {
+      matrix<int> mymatrix = matrix<int>();
+      std::cout << "The number of elements in mymatrix is " << mymatrix.m_nElements << std::endl;
+      delete &mymatrix;
+      
+      matrix<int> mymatrix2 = matrix<int>(2,2);
+      std::cout << "The number of elements in mymatrix2 is " << mymatrix2.m_nElements << std::endl;
+      delete &mymatrix2;
+      
+      return 0;
+    }
+
+### Deconstructors
+
+Now I am told we need something called a deconstructor. This is because we need to use dynamic memory allocation. This is typically something that in a language like Python and JVM based languages like Scala we never think about - all memory allocation is dynamic. ( In reality the JVM bulk allocates a portion of the available underlying memory when it starts up and then manages it for you, so this process is opaque to the user).
+
+However in C++ this is not the case. Local and global variables are allocated to the stack, and dynamically allocated memory is put on the heap.\
+\
+With our matrix program, we want to be able to create more or less any size matrix, subject to the limits of the OS and hardware. So this means we need dynamic memory allocations - ie memory for our matrix will be allocated at runtime based on conditions set by the user.
+
+Because C++ does not have a garbage collector like JVM based languages, dynamically allocated memory is not automatically deallocated. As a result we need to make sure that the memory allocated with the new keyword is deallocated with the `delete` keyword.
+
+You'll notice that I used the `delete` keyword to delete my matrix - however when I looked into it I realized this does NOT deallocate the memory allocated for the matrix data, because we used the `new` keyword to create that array.
+
+In order to make sure that the underlying data does get deallocated, we need to define a deconstructor for the class that deletes any memory that we allocated during the class construction.
+
+We use the `~` to define the deconstructor. Lets add it to our class template.
+
+    template <class T>
+    class matrix
+    {
+    public:
+      matrix();
+      ~matrix();
+      matrix(int nRows, int nCols);
+      int m_nRows;
+      int m_nCols;
+      int m_nElements;
+      T *m_elements;
+    };
+
+Now we can define the interface.
+
+    template <class T>
+    matrix<T>::~matrix()
+    {
+      if(m_matrixData!=nullptr){
+        delete[] m_elements;
+      }
+    }
+
+Alternatively we can always just delete that data ourselves.
