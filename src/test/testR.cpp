@@ -20,9 +20,7 @@ int mCreateTest()
 
   matrix<int> mymatrix2 = matrix<int>(1000,1000);
   std::cout << "The number of elements in mymatrix2 is " << mymatrix2.m_nElements << std::endl;
-  delete &mymatrix2.m_elements;
-  delete &mymatrix2;
-  
+
   return 0;
 }
 

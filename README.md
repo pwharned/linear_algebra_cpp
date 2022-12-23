@@ -21,6 +21,10 @@ This is an ongoing learning experience and any helpful feedback is more than wel
 
 Much of the code and content here is taken or adapted from the Youtube channel 'Quantative Bytes's video series 'Linear Algebra in C++' or the 'C++ Primer' by Lippman, Lajoie and Moo (LLM) which I have adapted to my own use case. I also use the book 'Mathematics for Machine Learning' by Deisenroth, Faisal and Ong (DFO) and Sheldon Axler's 'Linear Algebra Done Right'. (SA) I will try to provide explicit references using the shorthand I described above where applicable.
 
+## Disclaimer
+
+I am completely self taught student of programming and computer science. The explanations and code in this document are provided on an as is basis and I don't make any claims that anything I have written is correct. By writing things down and trying to explain what I am learning I help myself learn and process ideas. However much if not all of what I have written may be considered or may simply be incorrect. If i've made a mistake please correct me - don't take anything I say (or anything anyone else says) as gospel - use your God-given rational faculties to interpret everything and come to the truth of the matter yourself. 
+
 ## Testing and Running Code
 
 I am using Rstudio as my IDE for the following reasons.
@@ -174,9 +178,9 @@ We can then update our test code.
       return 0;
     }
 
-### Deconstructors
+### Destructor
 
-Now I am told we need something called a deconstructor. This is because we need to use dynamic memory allocation. This is typically something that in a language like Python and JVM based languages like Scala we never think about - all memory allocation is dynamic. ( In reality the JVM bulk allocates a portion of the available underlying memory when it starts up and then manages it for you, so this process is opaque to the user).
+Now I am told we need something called a destructor. This is because we need to use dynamic memory allocation. This is typically something that in a language like Python and JVM based languages like Scala we never think about - all memory allocation is dynamic. ( In reality the JVM bulk allocates a portion of the available underlying memory when it starts up and then manages it for you, so this process is opaque to the user).
 
 However in C++ this is not the case. Local and global variables are allocated to the stack, and dynamically allocated memory is put on the heap.\
 \
@@ -186,9 +190,9 @@ Because C++ does not have a garbage collector like JVM based languages, dynamica
 
 You'll notice that I used the `delete` keyword to delete my matrix - however when I looked into it I realized this does NOT deallocate the memory allocated for the matrix data, because we used the `new` keyword to create that array.
 
-In order to make sure that the underlying data does get deallocated, we need to define a deconstructor for the class that deletes any memory that we allocated during the class construction.
+In order to make sure that the underlying data does get deallocated, we need to define a destructor for the class that deletes any memory that we allocated during the class construction.
 
-We use the `~` to define the deconstructor. Lets add it to our class template.
+We use the `~` to define the destructor. Lets add it to our class template.
 
     template <class T>
     class matrix
@@ -213,4 +217,36 @@ Now we can define the interface.
       }
     }
 
-Alternatively we can always just delete that data ourselves.
+## Re-factoring
+
+At this point I realized I did not like the implementation that was being described by QuantativeBytes - in that we are using a single array to store all elements of the matrix. Its possible to do it this way by just using basic arithmetic to determine the positions of various elements along the rows and columns within the one dimensional array, and he gives an explanation as to why he does it this way ( something about raw pointers, which I don't yet understand - how can a pointer be raw?) but one of the main issues i see is that every-time we want to access an element in the array we have to compute its location based in the user provided indices - It seems to me that this adds significant overhead to accessing elements in our matrix which with small matrices is probably trivial but may ultimately affect the performance in larger dimensions.
+
+So instead I decided we would create a two dimensional matrix using nested arrays. I went to LLM p 126 to read up on multidimensional arrays.
+
+There is apparently several ways to make multidimensional arrays in c++ but of course one of our requirements is dynamic memory allocation. So we do this by declaring an array of pointers.
+
+```
+T** m_elements;
+```
+
+So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array. 
+
+After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" ( I think). 
+
+```
+  m_elements = new T*[m_nElements]; //declare a memory block
+  for(int i=0; i<m_nRows; i++){
+        m_elements[i] = new T[m_nCols];
+        for (int j=0; j<m_nCols; j++){
+          m_elements[i][j]=0.0;
+        }
+  }
+
+
+
+```
+
+
+
+
+
