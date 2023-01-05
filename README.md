@@ -23,7 +23,7 @@ Much of the code and content here is taken or adapted from the Youtube channel '
 
 ## Disclaimer
 
-I am completely self taught student of programming and computer science. The explanations and code in this document are provided on an as is basis and I don't make any claims that anything I have written is correct. By writing things down and trying to explain what I am learning I help myself learn and process ideas. However much if not all of what I have written may be considered or may simply be incorrect. If i've made a mistake please correct me - don't take anything I say (or anything anyone else says) as gospel - use your God-given rational faculties to interpret everything and come to the truth of the matter yourself. 
+I am completely self taught student of programming and computer science. The explanations and code in this document are provided on an as is basis and I don't make any claims that anything I have written is correct. By writing things down and trying to explain what I am learning I help myself learn and process ideas. However much if not all of what I have written may be considered or may simply be incorrect. If i've made a mistake please correct me - don't take anything I say (or anything anyone else says) as gospel - use your God-given rational faculties to interpret everything and come to the truth of the matter yourself.
 
 ## Testing and Running Code
 
@@ -225,28 +225,114 @@ So instead I decided we would create a two dimensional matrix using nested array
 
 There is apparently several ways to make multidimensional arrays in c++ but of course one of our requirements is dynamic memory allocation. So we do this by declaring an array of pointers.
 
-```
-T** m_elements;
-```
+    T** m_elements;
 
-So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array. 
+So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array.
 
-After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" ( I think). 
+After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" ( I think).
 
-```
-  m_elements = new T*[m_nElements]; //declare a memory block
-  for(int i=0; i<m_nRows; i++){
-        m_elements[i] = new T[m_nCols];
-        for (int j=0; j<m_nCols; j++){
-          m_elements[i][j]=0.0;
+      m_elements = new T*[m_nElements]; //declare a memory block
+      for(int i=0; i<m_nRows; i++){
+            m_elements[i] = new T[m_nCols];
+            for (int j=0; j<m_nCols; j++){
+              m_elements[i][j]=0.0;
+            }
+      }
+
+With our updated constructors we can now work on adding a method to access and index elements in our matrix. I really wanted to be able to index elements of my matrix using the regular `[]` operator instead of writing some method that does it for me - since I want my matrix to basically behave in a familiar way. Fortunately this is possible in C++ although I am not going to expand this functionality alot as I will focus more on developing the actual matrix operations. So lets just have the `[]` operator return the array at the given index.
+
+       T* operator[] (int n){
+
+        if(n>m_nRows){
+          std::cout << "Index " << n << " exceeds the number of matrix elements " << m_nElements << std::endl; 
+          return m_elements[0];
+
         }
-  }
+        else return m_elements[n];
+        
+      }
+
+Right now if the user tries to access an element that doesnt exist in the matrix, we just print a warning to stdout and return the first element. I don't know how exactly to throw and catch errors yet so this seemed like the best way to do it.
+
+Notice that unlike the approach of Quantitative Bytes, I decided to return a pointer rather than a reference. That way, I declare a pointer to the column that I am interested in looking at, which returns a pointer to the first row element for that column, allowing me then to iterate over those elements easily.
+
+We will add a simple test to our test file to make sure it works.
+
+    #include "../matrix/matrix.h"
+    #include <iostream>
+    #include <Rcpp.h>
+    using namespace Rcpp;
+
+
+    // [[Rcpp::export]]
+
+    int main()
+    {
+      matrix<int> mymatrix = matrix<int>();
+      std::cout << "The number of elements in mymatrix is " << mymatrix.m_nElements << std::endl;
+
+      matrix<int> mymatrix2 = matrix<int>(1000,1000);
+      std::cout << "The number of elements in mymatrix2 is " << mymatrix2.m_nElements << std::endl;
+     
+     int *p =mymatrix2[900];
+     for(int i = 0; i<mymatrix2.m_nRows; i++){
+       int v = p[i];
+       std::cout << "The" <<i <<"th element of the 900th element of mymatrix2 is " << v << std::endl;
+       
+     }
+     
+     int *p2 =mymatrix2[1001];
+     int *p3 =mymatrix2[0];
+     
+     std::cout << "The 1001th element mymatrix2 is " << p2 << std::endl;
+     
+     std::cout << "The pointer p2 "<< p2 << " is the same as " << p3 << std::endl;
 
 
 
-```
+      return 0;
+    }
 
+We have most of the boilerplate in place - we need to implement one more constructor to get started actually implementing things - a constructor that takes some in a predefined matrix data to work on.
 
+This was a bit tricky as what I realized/thought I have to do is to reassign the pointer value `m_elements` the pointer value corresponding to the first element of the matrix data that I created. So first I need a way just to create an array of arrays that had actual values, which I did like this.
 
+     int arr[6] = { 10, 20, 30, 40 };
+     int arr2[6] = { 10, 20, 30, 40 };
+     int* elements[2];
+     elements[0] = &arr[0];
+     elements[1] = &arr2[0];
 
+Then I should be able to pass this into my constructor - this didn't quite work though. I eventually got it to this.
 
+     int arr[6] = { 10, 20, 30, 40 };
+     int arr2[6] = { 10, 20, 30, 40 };
+
+     int** elements =  new int*[2];
+     
+     elements[0]= arr;
+     elements[1]= arr;
+
+This part was educative for me because it began to help me understand better what an array is and what pointers really are and how they function. Notice that the declaration
+
+     int arr[6] = { 10, 20, 30, 40 };
+
+Declares an array and instantiates it with a bunch of values between the brackets. However when I print the value of `arr` I see that its a POINTER. That's because an array is just a contiguous block of memory, and in a language like C or C++ (unlike in Java, Python, Scala, etc), we manipulate the elements of the array in a more direct manner by interacting with the memory directly, rather than indirectly through the language's API.
+
+Which allowed me to define the constructor that takes the matrix elements
+
+    template <class T>
+    matrix<T>::matrix(T** elements){
+      
+      int size = SIZEOF(elements);
+      
+      std::cout << "The size of the elements array is " << size << std::endl;
+      
+      m_elements = new int*[size];
+
+      m_elements = elements;
+    }
+
+And now I can create a matrix with my elements.
+
+    matrix<int> mymatrix3 = matrix<int>(elements);
