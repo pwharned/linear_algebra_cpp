@@ -1,5 +1,7 @@
 #include "matrix.h"
+#include <Rcpp.h>
 #include <iostream>
+using namespace Rcpp;
 
 int main()
 {

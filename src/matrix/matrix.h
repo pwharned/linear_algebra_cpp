@@ -1,7 +1,8 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 #include <iostream>
-#define SIZEOF(arr) sizeof(*arr) / sizeof(**arr)
+#define MSIZEOF(arr) sizeof(*arr) / sizeof(**arr)
+#define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
 
 template <class T>
 class matrix
@@ -10,6 +11,8 @@ public:
   matrix();
   matrix(int nRows, int nCols);
   matrix(T** elements);
+  
+  void print();
   
   ~matrix();
   
@@ -27,7 +30,11 @@ public:
     }
     else return m_elements[n];
     
-  }
+  };
+  
+  template <class U> friend matrix<U> operator+ (matrix<U>& operand);
+  
+  
 };
 
 template <class T>
@@ -48,13 +55,20 @@ matrix<T>::matrix()
 template <class T>
 matrix<T>::matrix(T** elements){
   
-  int size = SIZEOF(elements);
+  int size = MSIZEOF(elements);
+  
+  m_nCols = size;
+  
+  m_nRows = sizeof(elements[0][0]);
   
   std::cout << "The size of the elements array is " << size << std::endl;
-  
-  m_elements = new int*[size];
 
-  m_elements = elements;
+  m_elements = new T*[m_nCols];
+  
+  for(int i=0;i<m_nCols; i++){
+    m_elements[i] = elements[i];
+  }
+  
 }
   
 template <class T>
@@ -83,5 +97,26 @@ matrix<T>::~matrix()
   if(m_elements!=nullptr)
   delete [] m_elements;
 }
+
+
+template <class T>
+void matrix<T>::print()
+{
+  for(int i = 0; i < m_nCols; i++ ){
+    
+    for(int j = 0; j < m_nRows; j++){
+      
+      std::cout  << m_elements[i][j] << " | ";
+      
+      if(j==m_nRows-1){
+        std::cout << std::endl;
+        
+      }
+      
+    }
+    
+  }
+}
+
 
 #endif

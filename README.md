@@ -227,7 +227,7 @@ There is apparently several ways to make multidimensional arrays in c++ but of c
 
     T** m_elements;
 
-So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array.
+So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contiguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array.
 
 After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" ( I think).
 
@@ -336,3 +336,7 @@ Which allowed me to define the constructor that takes the matrix elements
 And now I can create a matrix with my elements.
 
     matrix<int> mymatrix3 = matrix<int>(elements);
+
+## Displaying our matrix.
+
+I want to also write a simple function for displaying our matrices by printing them to stdout.

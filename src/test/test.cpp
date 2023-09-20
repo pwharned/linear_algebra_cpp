@@ -2,9 +2,8 @@
 #include <iostream>
 #include <Rcpp.h>
 using namespace Rcpp;
-
-#define SIZEOF(arr) sizeof(*arr) / sizeof(**arr)
-
+#define MSIZEOF(arr) sizeof(*arr) / sizeof(**arr)
+#define SIZEOF(arr) sizeof(arr) / sizeof(*arr)
 
 // [[Rcpp::export]]
 
@@ -30,20 +29,25 @@ int main()
  std::cout << "The pointer p2 "<< p2 << " is the same as " << p3 << std::endl;
  
  
- int arr[6] = { 10, 20, 30, 40 };
- int arr2[6] = { 10, 20, 30, 40 };
+ int arr[4] = { 10, 20, 30, 40 };
+ int arr2[4] = { 50, 60, 70, 80 };
+ 
 
  int** elements =  new int*[2];
  
  elements[0]= arr;
- elements[1]= arr;
+ elements[1]= arr2;
  
+ 
+ 
+matrix<int> mymatrix3 = matrix<int>(elements);
 
- matrix<int> mymatrix3 = matrix<int>(elements);
- //mymatrix3.m_elements = new int*[2];
- //mymatrix3.m_elements = elements;
+std::cout << "The first element of the matrix3 matrix is " << mymatrix3.m_elements[1][1] << std::endl;
 
-std::cout << "The first element of the matrix3 matrix is " << **elements << std::endl;
+std::cout << "The number of rows is  " << mymatrix3.m_nRows << std::endl;
+
+
+mymatrix3.print();
 
  return 0;
 

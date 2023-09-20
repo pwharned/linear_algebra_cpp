@@ -1,3 +1,3 @@
 library(Rcpp)
-sourceCpp('iostreams.cpp')
+sourceCpp('src/matrix/deconstruct.cpp')
 tail(main(30))
