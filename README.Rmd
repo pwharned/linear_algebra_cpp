@@ -220,7 +220,7 @@ Rcpp::IntegerVector test() {
 
 ```
 
-```{r callFirstChunkInR}
+```{r}
 test()
 
 ```
