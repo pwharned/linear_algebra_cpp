@@ -423,7 +423,7 @@ There is apparently several ways to make multidimensional arrays in c++ but of c
 
 So whereas `T*` declares a single pointer that points to the start first block of memory to our array (since an array is just a contiguous block of memory) declaring an array of pointers in this way makes sense- every array index points to a piece of memory that can be used to instantiate an array.
 
-After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" ( I think).
+After we declare our array of pointers, we instantiate it using the `new` keyword. `new T*[n]` says "give me an array of pointers where each pointer points to an array of type T where each element is of type T" .
 
       m_elements = new T*[m_nElements]; //declare a memory block
       for(int i=0; i<m_nRows; i++){
@@ -452,15 +452,14 @@ Notice that unlike the approach of Quantitative Bytes, I decided to return a poi
 
 We will add a simple test to our test file to make sure it works.
 
-    #include "../matrix/matrix.h"
-    #include <iostream>
+
+```{Rcpp}
+
     #include <Rcpp.h>
+    #include "/Users/pat/Projects/linear_algebra_cpp/src/matrix/matrix.h"
     using namespace Rcpp;
 
-
-    // [[Rcpp::export]]
-
-    int main()
+   int main()
     {
       matrix<int> mymatrix = matrix<int>();
       std::cout << "The number of elements in mymatrix is " << mymatrix.m_nElements << std::endl;
@@ -486,6 +485,21 @@ We will add a simple test to our test file to make sure it works.
 
       return 0;
     }
+    
+//[[Rcpp::export]]
+Rcpp::IntegerVector RmCreateTest() {
+  return main();
+}
+```
+
+```{r}
+RmCreateTest()
+```
+
+
+
+
+ 
 
 We have most of the boilerplate in place - we need to implement one more constructor to get started actually implementing things - a constructor that takes some in a predefined matrix data to work on.
 
@@ -528,9 +542,115 @@ Which allowed me to define the constructor that takes the matrix elements
     }
 
 And now I can create a matrix with my elements.
+```{Rcpp}
+   
+   
+    #include <Rcpp.h>
+    #include "/Users/pat/Projects/linear_algebra_cpp/src/matrix/matrix.h"
+    using namespace Rcpp;
+    
+    int main() {
+      
+     int arr[6] = { 10, 20, 30, 40 };
+     int arr2[6] = { 50, 60, 70, 80 };
 
-    matrix<int> mymatrix3 = matrix<int>(elements);
+     int** elements =  new int*[2];
+     
+     elements[0]= arr;
+     elements[1]= arr2;
+     
+     
+    matrix<int> mymatrix3 = matrix<int>(elements,2,4);
+    
+    mymatrix3.print();
+     return 2;
+      
+}
+    
+    //[[Rcpp::export]]
+Rcpp::IntegerVector RmCreateTest() {
+  return main();
+}
 
-## Displaying our matrix.
+```
 
-I want to also write a simple function for displaying our matrices by printing them to stdout.
+```{r}
+RmCreateTest()
+```
+# Matrix Decomposition
+
+## The Determinant
+
+The Determinant of a matrix is a mapping from a matrix A to a real number. The determinant is measurement of the signed volume of an n-dimensional paralleleipiped formed by the columns of the matrix A. 
+
+The Determinant can be used to test for matrix invertability. If the determinant is zero, the matrix is not invertible. 
+
+For triangular matrices, the determinant is the product of the diagonal elements. 
+
+
+```{Rcpp}
+#include <Rcpp.h>
+    int main(){
+      int arr[2] = {1,2};
+      int size = *(&arr + 1) - arr;
+      std::cout << "The size of the array is " << size << std::endl;
+      return 0;
+}
+    //[[Rcpp::export]]
+    Rcpp::IntegerVector ArraySize () {
+      return main();
+}
+```
+```{r}
+ArraySize()
+```
+
+
+
+```{Rcpp}
+   
+   
+    #include <Rcpp.h>
+    #include "/Users/pat/Projects/linear_algebra_cpp/src/matrix/matrix.h"
+    using namespace Rcpp;
+
+    int main() {
+      
+     int arr[3] = { 178, 20,10 };
+     int arr2[3] = { 8, 240,10  };
+     int arr3[3] = { 88, 22,10  };
+
+     int** elements =  new int*[3];
+     
+     elements[0]= arr;
+     elements[1]= arr2;
+
+     elements[2]= arr3;
+
+    matrix<int> mymatrix3 = matrix<int>(elements,3 ,3);
+    
+    
+    
+    std::cout << "The  determinant s  " << mymatrix3.det() << std::endl;
+
+   
+
+     return 0;
+      
+}
+    
+    //[[Rcpp::export]]
+Rcpp::IntegerVector mdet() {
+  return main();
+}
+
+```
+```{r}
+det(as.matrix(cbind(c(178, 20,10), c(8, 240,10), c(88, 22,10))))
+```
+
+
+```{r}
+mdet()
+```
+
