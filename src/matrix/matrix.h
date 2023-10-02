@@ -60,8 +60,7 @@ matrix<T>::matrix(T** elements, int nCols, int nRows){
 
   m_nRows = nRows;
   m_nCols = nCols;
-  std::cout << "The number of rows in the matrix is " << m_nRows << "\n" << std::endl;
-  std::cout << "The number of columns in the matrix is " << m_nCols << "\n" << std::endl;
+
   
   m_elements = new T*[nCols];
   
